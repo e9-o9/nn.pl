@@ -614,8 +614,22 @@ class_nll_loss(LogProbs, Target, Loss) :-
 class_nll_gradient(LogProbs, Target, Gradient) :-
     length(LogProbs, N),
     length(Gradient, N),
-    maplist(=(0.0), Gradient, Temp),
-    nth0(Target, Temp, _, -1.0, Gradient).
+    create_zero_list(N, Zeros),
+    replace_at_index(Zeros, Target, -1.0, Gradient).
+
+%% Helper to create a list of zeros
+create_zero_list(0, []).
+create_zero_list(N, [0.0|Rest]) :-
+    N > 0,
+    N1 is N - 1,
+    create_zero_list(N1, Rest).
+
+%% Helper to replace element at index
+replace_at_index([_|T], 0, Value, [Value|T]).
+replace_at_index([H|T], Index, Value, [H|Rest]) :-
+    Index > 0,
+    Index1 is Index - 1,
+    replace_at_index(T, Index1, Value, Rest).
 
 %% bce_loss(+Predicted, +Target, -Loss)
 %% Binary cross entropy: -[t*log(p) + (1-t)*log(1-p)]
