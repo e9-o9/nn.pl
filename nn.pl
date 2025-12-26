@@ -213,20 +213,27 @@ backward_layers([LayerWeights|RestWeights], [CurrentAct, PrevAct|RestActs], Erro
     % Recursively process previous layers
     backward_layers(RestWeights, [PrevAct|RestActs], PropError, [LayerGrad|AccGrad], Gradients).
 backward_layers([LayerWeights|_], [CurrentAct], Error, AccGrad, [LayerGrad|AccGrad]) :-
-    % Base case: first layer (no previous activation)
-    maplist(gradient_neuron([], CurrentAct, Error), LayerWeights, LayerGrad).
+    % Base case: first layer (use CurrentAct as input since there's no previous layer)
+    compute_layer_gradients_first(LayerWeights, CurrentAct, Error, LayerGrad).
 
 %% compute_layer_gradients(+LayerWeights, +Input, +Output, +Error, -LayerGrad, -PropagatedError)
 compute_layer_gradients(LayerWeights, Input, Output, Error, LayerGrad, PropError) :-
-    maplist(gradient_neuron(Input, Output, Error), LayerWeights, LayerGrad),
+    % Compute gradient for each neuron with corresponding output and error
+    compute_neuron_gradients(LayerWeights, Input, Output, Error, LayerGrad),
     propagate_error(LayerWeights, Error, PropError).
 
-%% gradient_neuron(+Input, +Output, +Error, +NeuronWeights, -Gradient)
-gradient_neuron(Input, [O|_], [E|_], neuron(_Weights, _Bias), gradient(WeightGrads, BiasGrad)) :-
+%% compute_layer_gradients_first(+LayerWeights, +Output, +Error, -LayerGrad)
+compute_layer_gradients_first(LayerWeights, Output, Error, LayerGrad) :-
+    compute_neuron_gradients(LayerWeights, [], Output, Error, LayerGrad).
+
+%% compute_neuron_gradients(+Neurons, +Input, +Outputs, +Errors, -Gradients)
+compute_neuron_gradients([], _, [], [], []).
+compute_neuron_gradients([neuron(_Weights, _Bias)|RestNeurons], Input, [O|RestOut], [E|RestErr], [gradient(WeightGrads, BiasGrad)|RestGrad]) :-
     sigmoid_derivative(O, Derivative),
     Delta is E * Derivative,
-    maplist(mult_delta(Delta), Input, WeightGrads),
-    BiasGrad = Delta.
+    (Input = [] -> WeightGrads = [] ; maplist(mult_delta(Delta), Input, WeightGrads)),
+    BiasGrad = Delta,
+    compute_neuron_gradients(RestNeurons, Input, RestOut, RestErr, RestGrad).
 
 %% mult_delta(+Delta, +Input, -Gradient)
 mult_delta(Delta, Input, Grad) :-
