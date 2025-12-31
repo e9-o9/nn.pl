@@ -50,7 +50,7 @@ Simply clone the repository and load the `nn.pl` file:
 
 ```bash
 git clone https://github.com/e9-o9/nn.pl
-cd nn.pl
+cd nn.pl/lang/pl
 swipl
 ```
 
@@ -367,11 +367,13 @@ Testing predictions:
 
 Run the traditional interface tests:
 ```bash
+cd lang/pl
 swipl -q -l test_nn.pl -g run_tests -t halt
 ```
 
 Run the module-based interface tests:
 ```bash
+cd lang/pl
 swipl -q -l test_modules.pl -g run_module_tests -t halt
 ```
 
@@ -389,11 +391,13 @@ Or within the Prolog REPL:
 
 Run the traditional demos:
 ```bash
+cd lang/pl
 swipl -l demo.pl -g "run_all_demos" -t halt
 ```
 
 Run the module-based demos (NEW!):
 ```bash
+cd lang/pl
 swipl -l demo_modules.pl -g "run_all_demos" -t halt
 ```
 
