@@ -1,18 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 CMAKE_POLICY(VERSION 2.6)
 
-FIND_PACKAGE(Torch REQUIRED)
+# Root CMakeLists.txt for nn.pl
+# Delegates to language-specific implementations
 
-ADD_SUBDIRECTORY(lib)
-
-FILE(STRINGS lib/THNN/generic/THNN.h THNN_headers NEWLINE_CONSUME)
-FILE(WRITE THNN_h.lua "return [[")
-FILE(APPEND THNN_h.lua ${THNN_headers})
-FILE(APPEND THNN_h.lua "]]")
-
-FILE(GLOB luasrc *.lua)
-
-ADD_TORCH_PACKAGE(nn "" "${luasrc}")
-
-INSTALL(DIRECTORY "doc" DESTINATION "${Torch_INSTALL_LUA_PATH_SUBDIR}/nn")
-INSTALL(FILES "README.md" DESTINATION "${Torch_INSTALL_LUA_PATH_SUBDIR}/nn")
+# Add Lua/C implementation
+ADD_SUBDIRECTORY(lang/lua)

@@ -112,6 +112,7 @@ Successfully implemented a complete neural network library in pure Prolog (nn.pl
 ### Running Demos
 ```bash
 # Run all demos
+cd lang/pl
 swipl -l demo.pl -g "run_all_demos" -t halt
 
 # Run tests
