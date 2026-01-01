@@ -10,7 +10,7 @@ description: "nn in plingua"
 
 # nn.pli
 
-A P-Systems PLingua implementation of:
+A P-Systems [PLingua](https://github.com/RGNC/plingua) implementation of:
 
 [![Build Status](https://travis-ci.org/torch/nn.svg?branch=master)](https://travis-ci.org/torch/nn)
 <a name="nn.dok"></a>
