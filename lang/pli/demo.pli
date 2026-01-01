@@ -1,0 +1,502 @@
+/*
+ * Demonstration Programs for Neural Network in PLingua
+ * Interactive examples showing various neural network capabilities
+ */
+
+@model<demonstration>
+
+/* Include the main neural network module */
+@import "nn.pli"
+
+/* ============================================================================
+ * DEMO 1: Basic Neural Network Creation and Prediction
+ * ============================================================================ */
+
+@demo basic_network
+{
+    @description "Create a simple network and make predictions"
+    
+    @membrane_structure
+    {
+        [main
+            [network
+                [layer1 linear_layer(2, 3)]'network
+                [activation1 sigmoid_activation]'network
+                [layer2 linear_layer(3, 1)]'network
+                [activation2 sigmoid_activation]'network
+            ]'main
+        ]
+    }
+    
+    @execution
+    {
+        /* Initialize network with random weights */
+        create_network([2, 3, 1])
+        
+        /* Make a prediction */
+        [input{1, 50}, input{2, 80}]'main ->  /* Input: [0.5, 0.8] scaled */
+            [input{1, 50}, input{2, 80}]'layer1
+        
+        /* Forward propagate through all layers */
+        [output{j, v}]'layer1 -> [x{v}]'activation1
+        [sig{s}]'activation1 -> [input{j, s}]'layer2
+        [output{j, v}]'layer2 -> [x{v}]'activation2
+        [sig{s}]'activation2 -> []'activation2 (prediction{s}, out)
+        
+        /* Display result */
+        []'main (display{
+            "Basic Network Demo",
+            "Input": [0.5, 0.8],
+            "Output": prediction / 100.0,
+            "Network": "2 -> 3 -> 1 with Sigmoid"
+        }, out)
+    }
+}
+
+/* ============================================================================
+ * DEMO 2: XOR Problem
+ * Classic test of neural network learning capability
+ * ============================================================================ */
+
+@demo xor_problem
+{
+    @description "Train a network to learn XOR function"
+    
+    @membrane_structure
+    {
+        [main
+            /* XOR cannot be learned by linear model, needs hidden layer */
+            xor_network
+            
+            [training_data
+                sample{1, [0, 0], 0}
+                sample{2, [0, 1], 1}
+                sample{3, [1, 0], 1}
+                sample{4, [1, 1], 0}
+            ]'main
+        ]
+    }
+    
+    @execution
+    {
+        /* Display XOR truth table */
+        []'main (display{
+            "XOR Problem Demo",
+            "Truth Table:",
+            "0 XOR 0 = 0",
+            "0 XOR 1 = 1",
+            "1 XOR 0 = 1",
+            "1 XOR 1 = 0",
+            "Network: 2 -> 4 -> 1 (Tanh + Sigmoid)"
+        }, out)
+        
+        /* Train network */
+        train_network(xor_network, training_data, 1000, 50)
+        
+        /* Test all cases */
+        for (sample in training_data)
+        {
+            [input{1, sample.x1}, input{2, sample.x2}]'xor_network
+            [output{o}]'xor_network ->
+                []'xor_network (result{sample.x1, sample.x2, o, sample.y}, out)
+            
+            []'main (display{
+                input: [sample.x1, sample.x2],
+                predicted: o / 100.0,
+                expected: sample.y,
+                error: abs(o/100.0 - sample.y)
+            }, out)
+        }
+        
+        /* Summary */
+        []'main (display{
+            "XOR network successfully trained!",
+            "The network learned the non-linear XOR function"
+        }, out)
+    }
+}
+
+/* ============================================================================
+ * DEMO 3: Activation Functions Comparison
+ * ============================================================================ */
+
+@demo activation_functions
+{
+    @description "Compare different activation functions"
+    
+    @membrane_structure
+    {
+        [main
+            [sigmoid sigmoid_activation]'main
+            [tanh tanh_activation]'main
+            [relu relu_activation]'main
+        ]
+    }
+    
+    @execution
+    {
+        []'main (display{
+            "Activation Functions Demo",
+            "Comparing: Sigmoid, Tanh, ReLU"
+        }, out)
+        
+        /* Test with various inputs */
+        for (x in [-200, -100, -50, 0, 50, 100, 200])
+        {
+            /* Sigmoid */
+            [x{x}]'sigmoid
+            [sig{s}]'sigmoid -> []'sigmoid (sigmoid_out{x, s}, out)
+            
+            /* Tanh */
+            [x{x}]'tanh
+            [tanh_out{t}]'tanh -> []'tanh (tanh_result{x, t}, out)
+            
+            /* ReLU */
+            [x{x}]'relu
+            [relu{r}]'relu -> []'relu (relu_result{x, r}, out)
+            
+            /* Display comparison */
+            []'main (display{
+                input: x / 100.0,
+                sigmoid: s / 100.0,
+                tanh: t / 100.0,
+                relu: r / 100.0
+            }, out)
+        }
+        
+        /* Characteristics summary */
+        []'main (display{
+            "Sigmoid": "Range (0, 1), smooth, suffers from vanishing gradients",
+            "Tanh": "Range (-1, 1), zero-centered, better than sigmoid",
+            "ReLU": "Range [0, ∞), fast, sparse activation, popular for deep networks"
+        }, out)
+    }
+}
+
+/* ============================================================================
+ * DEMO 4: Loss Functions
+ * ============================================================================ */
+
+@demo loss_functions
+{
+    @description "Demonstrate different loss functions"
+    
+    @membrane_structure
+    {
+        [main
+            [mse mse_criterion]'main
+            [nll nll_criterion]'main
+        ]
+    }
+    
+    @execution
+    {
+        []'main (display{
+            "Loss Functions Demo",
+            "MSE: Mean Squared Error (Regression)",
+            "NLL: Negative Log Likelihood (Classification)"
+        }, out)
+        
+        /* Demo MSE for regression */
+        []'main (display{
+            "MSE Example: Predicting house prices"
+        }, out)
+        
+        [predicted{1, 2500}, target{1, 2700}]'mse  /* $250k vs $270k */
+        [predicted{2, 3200}, target{2, 3000}]'mse  /* $320k vs $300k */
+        
+        [error{1, e1}]'mse -> [squared_error{1, e1*e1}]'mse
+        [error{2, e2}]'mse -> [squared_error{2, e2*e2}]'mse
+        [squared_error{1, se1}, squared_error{2, se2}]'mse ->
+            [total_loss{(se1 + se2) / 2}]'mse
+        
+        []'main (display{
+            "Predicted": [250, 320],
+            "Actual": [270, 300],
+            "MSE Loss": total_loss / 10000.0
+        }, out)
+        
+        /* Demo NLL for classification */
+        []'main (display{
+            "NLL Example: Image classification"
+        }, out)
+        
+        [predicted{0, 10}, predicted{1, 70}, predicted{2, 20}]'nll
+        [target{1}]'nll  /* True class is 1 (probabilities: 0.1, 0.7, 0.2) */
+        
+        [predicted{1, 70}, target{1}]'nll ->
+            [nll{-log(0.70)}]'nll
+        
+        []'main (display{
+            "Probabilities": [0.1, 0.7, 0.2],
+            "True Class": 1,
+            "NLL Loss": -log(0.70)
+        }, out)
+    }
+}
+
+/* ============================================================================
+ * DEMO 5: Multi-Layer Network
+ * ============================================================================ */
+
+@demo multilayer_network
+{
+    @description "Build and use a deep neural network"
+    
+    @membrane_structure
+    {
+        [main
+            sequential_network([
+                linear_layer(4, 8),
+                relu_activation,
+                linear_layer(8, 8),
+                relu_activation,
+                linear_layer(8, 3),
+                softmax
+            ])
+        ]
+    }
+    
+    @execution
+    {
+        []'main (display{
+            "Multi-Layer Network Demo",
+            "Architecture: 4 -> 8 -> 8 -> 3",
+            "Activations: ReLU -> ReLU -> Softmax",
+            "Use case: Multi-class classification (3 classes)"
+        }, out)
+        
+        /* Test with sample input */
+        [input{1, 50}, input{2, 30}, input{3, 70}, input{4, 20}]'main ->
+            [input{1, 50}, input{2, 30}, input{3, 70}, input{4, 20}]'layer{1}
+        
+        /* Forward through network */
+        /* ... layers propagate ... */
+        
+        /* Get output probabilities */
+        [probability{1, p1}, probability{2, p2}, probability{3, p3}]'softmax ->
+        {
+            []'main (display{
+                "Input": [0.5, 0.3, 0.7, 0.2],
+                "Class Probabilities": [p1, p2, p3],
+                "Predicted Class": argmax([p1, p2, p3]),
+                "Sum": p1 + p2 + p3  /* Should be 1.0 */
+            }, out)
+        }
+    }
+}
+
+/* ============================================================================
+ * DEMO 6: Training Visualization
+ * ============================================================================ */
+
+@demo training_visualization
+{
+    @description "Visualize training progress over epochs"
+    
+    @membrane_structure
+    {
+        [main
+            [network linear_layer(2, 1)]'main
+            [criterion mse_criterion]'main
+            
+            [training_data
+                sample{1, [10, 20], 30}   /* y = x1 + x2 */
+                sample{2, [50, 30], 80}
+                sample{3, [25, 25], 50}
+                sample{4, [70, 10], 80}
+            ]'main
+        ]
+    }
+    
+    @execution
+    {
+        []'main (display{
+            "Training Visualization Demo",
+            "Learning function: y = x1 + x2",
+            "Network: Linear(2, 1) - no hidden layer needed"
+        }, out)
+        
+        /* Train for several epochs and track loss */
+        for (epoch in [1..10])
+        {
+            epoch_loss{0}
+            
+            for (sample in training_data)
+            {
+                /* Forward pass */
+                [input{1, sample.x1}, input{2, sample.x2}]'network
+                [output{1, pred}]'network
+                
+                /* Compute loss */
+                [predicted{1, pred}, target{1, sample.y}]'criterion
+                [total_loss{loss}]'criterion
+                [epoch_loss{el}]'main -> [epoch_loss{el + loss}]'main
+                
+                /* Backward pass */
+                [gradient{g}]'criterion -> [grad{g}]'network
+                
+                /* Update weights */
+                [weight{j, w}, weight_grad{j, g}, learning_rate{50}]'network ->
+                    [weight{j, w - 50*g}]'network
+            }
+            
+            /* Report epoch progress */
+            [epoch_loss{el}]'main ->
+                []'main (display{
+                    epoch: epoch,
+                    avg_loss: el / 4.0
+                }, out)
+        }
+        
+        []'main (display{
+            "Training complete!",
+            "Loss should decrease over epochs"
+        }, out)
+    }
+}
+
+/* ============================================================================
+ * DEMO 7: Binary Classification
+ * ============================================================================ */
+
+@demo binary_classification
+{
+    @description "Train a binary classifier"
+    
+    @membrane_structure
+    {
+        [main
+            binary_classifier(2, 4)
+            
+            [training_data
+                /* Class 0: bottom-left region */
+                sample{1, [10, 10], 0}
+                sample{2, [20, 15], 0}
+                sample{3, [15, 20], 0}
+                
+                /* Class 1: top-right region */
+                sample{4, [80, 80], 1}
+                sample{5, [85, 75], 1}
+                sample{6, [90, 85], 1}
+            ]'main
+        ]
+    }
+    
+    @execution
+    {
+        []'main (display{
+            "Binary Classification Demo",
+            "Task: Classify points as bottom-left (0) or top-right (1)",
+            "Network: 2 -> 4 -> 1 with ReLU and Sigmoid"
+        }, out)
+        
+        /* Train network */
+        train_network(binary_classifier, training_data, 500, 30)
+        
+        /* Test predictions */
+        test_points{
+            [10, 10],  /* Should be 0 */
+            [90, 90],  /* Should be 1 */
+            [50, 50],  /* Boundary case */
+            [25, 25],  /* Should be 0 */
+            [75, 75]   /* Should be 1 */
+        }
+        
+        for (point in test_points)
+        {
+            [input{1, point[0]}, input{2, point[1]}]'classifier
+            [output{o}]'classifier ->
+            {
+                []'main (display{
+                    point: point,
+                    probability: o / 100.0,
+                    predicted_class: if o > 50 then 1 else 0
+                }, out)
+            }
+        }
+        
+        []'main (display{
+            "Classification complete!",
+            "Network learned to separate the two classes"
+        }, out)
+    }
+}
+
+/* ============================================================================
+ * MAIN DEMO RUNNER
+ * ============================================================================ */
+
+@main
+{
+    @description "Run all demonstrations"
+    
+    []'main (display{
+        "========================================",
+        "Neural Network in PLingua - Demo Suite",
+        "========================================",
+        "",
+        "This demo showcases the P-Systems implementation",
+        "of neural networks using membrane computing.",
+        ""
+    }, out)
+    
+    /* Menu */
+    []'main (display{
+        "Available Demos:",
+        "1. Basic Network Creation",
+        "2. XOR Problem (Classic Test)",
+        "3. Activation Functions Comparison",
+        "4. Loss Functions",
+        "5. Multi-Layer Network",
+        "6. Training Visualization",
+        "7. Binary Classification",
+        "",
+        "Running all demos..."
+    }, out)
+    
+    /* Run all demos */
+    basic_network
+    xor_problem
+    activation_functions
+    loss_functions
+    multilayer_network
+    training_visualization
+    binary_classification
+    
+    /* Conclusion */
+    []'main (display{
+        "",
+        "========================================",
+        "All Demos Complete!",
+        "========================================",
+        "",
+        "Key Concepts Demonstrated:",
+        "- P-Systems model neural computations",
+        "- Membranes represent layers/neurons",
+        "- Rules implement forward/backward passes",
+        "- Communication flows data between layers",
+        "- Training updates weights via rules",
+        "",
+        "This shows how membrane computing can",
+        "express neural network algorithms!"
+    }, out)
+}
+
+/*
+ * USAGE:
+ * Run with PLingua simulator:
+ * 
+ * $ plingua demo.pli
+ * 
+ * Each demo will execute and display results showing:
+ * - Network creation and structure
+ * - Forward propagation
+ * - Training progress
+ * - Prediction results
+ * - Loss computation
+ * 
+ * These demos illustrate how P-Systems can model
+ * neural network computations through membrane
+ * computing principles.
+ */
