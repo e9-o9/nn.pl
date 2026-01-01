@@ -38,7 +38,7 @@
   "Assert that actual is approximately equal to expected"
   (assert-true (< (abs (- actual expected)) tolerance)
                (string-append message
-                            " (expected: ~" (format #f "~a" expected)
+                            " (expected: " (format #f "~a" expected)
                             ", got: " (format #f "~a" actual)
                             ", tolerance: " (format #f "~a" tolerance) ")")))
 

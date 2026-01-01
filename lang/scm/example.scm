@@ -1,4 +1,4 @@
-#!/usr/bin/env guile
+#!/usr/bin/env -S guile --no-auto-compile -s
 !#
 
 ;;; example.scm - Quick example of using the nn.scm library
